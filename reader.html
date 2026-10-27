@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Читати — Мрії здійснюються</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎃</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+<script>
+  // Без покупки — назад на головну
+  (function(){
+    var ok = document.cookie.split('; ').some(function(c){ return c === 'comic_purchased=1' });
+    try{ ok = ok || localStorage.getItem('comic_purchased') === '1' }catch(e){}
+    if (!ok) location.replace('index.html');
+  })();
+</script>
+<style>
+  :root{--orange:#ff7a18;--glow:#ffcf6b;--bone:#fff3dc}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Rubik',system-ui,sans-serif;color:var(--bone);
+    background:
+      radial-gradient(circle at 50% 45%, rgba(255,140,40,.22), transparent 55%),
+      radial-gradient(circle at 90% 8%, rgba(255,207,107,.25) 0 5%, transparent 20%),
+      linear-gradient(180deg,#0d0820 0%,#1d1040 60%,#2a0f2e 100%)}
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .leaf{position:absolute;top:-8vh;animation:fall linear forwards;opacity:.8}
+  @keyframes fall{0%{transform:translate(0,0) rotate(0)}33%{transform:translate(40px,38vh) rotate(140deg)}
+    66%{transform:translate(-30px,76vh) rotate(260deg)}100%{transform:translate(10px,115vh) rotate(400deg)}}
+  .bat{position:absolute;font-size:24px;animation:fly linear forwards}
+  @keyframes fly{0%{transform:translate(-10vw,0)}33%{transform:translate(35vw,-5vh)}66%{transform:translate(70vw,4vh)}100%{transform:translate(115vw,0)}}
+
+  header{position:relative;z-index:5;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:12px}
+  .home{color:var(--bone);text-decoration:none;font-weight:600;padding:9px 16px;border-radius:999px;
+    background:rgba(58,29,110,.7);border:2px solid rgba(255,122,24,.6);transition:.2s;white-space:nowrap}
+  .home:hover{background:rgba(255,122,24,.25)}
+  .title{font-family:'Rubik Wet Paint','Rubik',cursive;color:var(--orange);font-size:clamp(18px,3vw,30px);
+    text-shadow:0 0 10px rgba(255,122,24,.8),2px 2px 0 #2a0a00;text-align:center}
+  .counter{font-weight:600;color:var(--glow);min-width:110px;text-align:right;white-space:nowrap}
+
+  .stage{position:relative;z-index:3;height:calc(100% - 64px);display:flex;align-items:center;justify-content:center;gap:14px;padding:0 10px 18px}
+  .nav{flex:0 0 auto;width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:30px;color:#2a0d00;
+    background:radial-gradient(circle at 35% 30%,#ffd28a,#ff8a1f 55%,#c94300);
+    box-shadow:0 5px 0 #7a2600,0 0 25px rgba(255,120,0,.6);transition:transform .15s,opacity .3s;display:grid;place-items:center}
+  .nav:hover{transform:scale(1.08)}
+  .nav:active{transform:scale(.95) translateY(3px)}
+  .nav[disabled]{opacity:.25;cursor:default;transform:none}
+
+  /* ---------- книга ---------- */
+  .book-wrap{position:relative}
+  .book{position:relative;isolation:isolate}
+  .book::before{ /* палітурка під сторінками */
+    content:"";position:absolute;inset:-14px -16px;border-radius:10px;z-index:-1;
+    background:linear-gradient(90deg,#3a1205,#5c1f08 48%,#2a0c03 50%,#5c1f08 52%,#3a1205);
+    box-shadow:0 30px 70px rgba(0,0,0,.8),0 0 60px rgba(255,110,0,.25),inset 0 0 0 2px #ff8a1f55}
+  .book.single::before{background:#4a1a07}
+  .pg{background:#f3e6c9;overflow:hidden}
+  .pg img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;background:#111}
+  .blank{width:100%;height:100%;display:grid;place-items:center;font-size:64px;
+    background:radial-gradient(circle,#2a1450,#120726);color:var(--orange);text-align:center}
+  .blank span{font-family:'Rubik Wet Paint',cursive;font-size:22px;display:block;margin-top:10px}
+
+  .loader{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:rgba(10,4,25,.92);transition:opacity .5s}
+  .loader .pk{font-size:72px;animation:pulse 1s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(255,120,0,.9))}
+  @keyframes pulse{50%{transform:scale(1.15) rotate(8deg)}}
+  .loader.done{opacity:0;pointer-events:none}
+  .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;font-size:12px;opacity:.5;z-index:4}
+
+  @media (max-width:700px){
+    .nav{width:44px;height:44px;font-size:22px}
+    .stage{gap:6px;padding:0 4px 18px}
+    .counter{min-width:auto;font-size:13px}
+    .home{padding:7px 11px;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div id="fx"></div>
+<header>
+  <a class="home" href="index.html">← На головну</a>
+  <div class="title">Мрії здійснюються</div>
+  <div class="counter" id="counter">…</div>
+</header>
+<div class="stage">
+  <button class="nav" id="prev" aria-label="Попередні сторінки">◀</button>
+  <div class="book-wrap" id="wrap"></div>
+  <button class="nav" id="next" aria-label="Наступні сторінки">▶</button>
+</div>
+<div class="hint">Стрілки ← → на клавіатурі, свайп або перетягни кут сторінки</div>
+<div class="loader" id="loader"><div class="pk">🎃</div><div id="loadTxt">Відкриваємо книгу…</div></div>
+
+<script>
+/* ===== Налаштування ===== */
+const PAGES_DIR  = 'Сторінки';
+const EXTENSIONS = ['png','jpg','jpeg','webp'];
+const MAX_PAGES  = 500;
+
+function pageUrl(n, ext){ return encodeURI(PAGES_DIR + '/' + n + '.' + ext) }
+function imgExists(url){ return new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url; }); }
+async function urlExists(url, useFetch){
+  if (useFetch){ try{ const r = await fetch(url, {method:'HEAD', cache:'no-cache'}); return r.ok }catch(e){ return imgExists(url) } }
+  return imgExists(url);
+}
+async function detectPages(){
+  const useFetch = location.protocol.startsWith('http'), list = [];
+  for (let n = 1; n <= MAX_PAGES; n++){
+    let found = null;
+    for (const ext of EXTENSIONS){ const u = pageUrl(n, ext); if (await urlExists(u, useFetch)){ found = u; break; } }
+    if (!found) break;
+    list.push(found);
+    document.getElementById('loadTxt').textContent = 'Знайдено сторінок: ' + n;
+  }
+  return list;
+}
+
+/* ===== Книга (перегортання — StPageFlip) ===== */
+const $ = id => document.getElementById(id);
+const wrap = $('wrap');
+let pages = [], pf = null, single = false, ratio = 1440/2560, cur = 0, lastKey = '';
+
+function layout(){
+  const portrait = innerWidth <= 700;
+  const navW = (portrait ? 44 : 64) * 2 + 60;
+  const availW = innerWidth - navW, availH = innerHeight - 64 - 46, cols = portrait ? 1 : 2;
+  let w = availH * ratio, h = availH;
+  if (w * cols > availW){ w = availW / cols; h = w / ratio; }
+  return { portrait, w: Math.floor(w), h: Math.floor(h) };
+}
+
+function update(){
+  if (!pf) return;
+  const i = pf.getCurrentPageIndex(), total = pages.length;
+  const a = i + 1, b = single ? a : Math.min(i + 2, total);
+  $('counter').textContent = (a === b ? a : a + '–' + b) + ' / ' + total;
+  $('prev').disabled = i <= 0;
+  $('next').disabled = i >= pf.getPageCount() - (single ? 1 : 2);
+}
+
+function build(){
+  const L = layout();
+  if (pf){ cur = pf.getCurrentPageIndex(); pf.destroy(); pf = null; }
+  single = L.portrait;
+  lastKey = L.w + 'x' + L.h + single;
+
+  const book = document.createElement('div');
+  book.className = 'book' + (single ? ' single' : '');
+  book.style.width = (L.w * (single ? 1 : 2)) + 'px';
+  book.style.height = L.h + 'px';
+  const inner = document.createElement('div');
+  book.append(inner); wrap.replaceChildren(book);
+
+  const els = pages.map((src, n) => {
+    const d = document.createElement('div'); d.className = 'pg';
+    const img = new Image(); img.src = src; img.alt = 'Сторінка ' + (n + 1); img.draggable = false;
+    d.append(img); return d;
+  });
+  if (pages.length % 2){            // порожня сторінка в кінці, щоб розворот був парним
+    const d = document.createElement('div'); d.className = 'pg';
+    d.innerHTML = '<div class="blank"><div>🎃<span>Кінець</span></div></div>'; els.push(d);
+  }
+
+  pf = new St.PageFlip(inner, {
+    width: L.w, height: L.h, size: 'fixed',
+    showCover: false,                // розворот 1–2, 3–4 …
+    usePortrait: single,
+    startPage: single ? cur : cur - cur % 2,
+    drawShadow: true, maxShadowOpacity: .6, flippingTime: 900,
+    mobileScrollSupport: false
+  });
+  pf.loadFromHTML(els);
+  pf.on('flip', update);
+  update();
+}
+
+$('next').onclick = () => pf && pf.flipNext();
+$('prev').onclick = () => pf && pf.flipPrev();
+document.addEventListener('keydown', e => {
+  if (!pf) return;
+  if (e.key === 'ArrowRight') pf.flipNext();
+  if (e.key === 'ArrowLeft') pf.flipPrev();
+});
+let rt;
+addEventListener('resize', () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => { const L = layout(); if (pf && lastKey !== L.w + 'x' + L.h + L.portrait) build(); }, 250);
+});
+
+(async function init(){
+  pages = await detectPages();
+  if (!pages.length){ $('loadTxt').textContent = 'У папці «' + PAGES_DIR + '» не знайдено сторінок (1.png, 2.png …)'; return; }
+  await new Promise(r => { const i = new Image(); i.onload = () => { ratio = i.naturalWidth / i.naturalHeight; r(); }; i.onerror = r; i.src = pages[0]; });
+  build();
+  $('loader').classList.add('done');
+})();
+
+/* ===== Атмосфера ===== */
+const fx = $('fx');
+function spawn(cls, txt, styler){
+  const el = document.createElement('div'); el.className = cls; el.textContent = txt; styler(el.style);
+  fx.appendChild(el); el.addEventListener('animationend', () => el.remove());
+}
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  setInterval(() => spawn('leaf', ['🍂','🍁'][Math.random()*2|0], s => {
+    s.left = Math.random()*100 + 'vw'; s.fontSize = (14 + Math.random()*14) + 'px'; s.animationDuration = (10 + Math.random()*8) + 's';
+  }), 2200);
+  setInterval(() => spawn('bat', '🦇', s => { s.top = (4 + Math.random()*20) + 'vh'; s.animationDuration = (8 + Math.random()*5) + 's'; }), 9000);
+}
+</script>
+</body>
+</html>

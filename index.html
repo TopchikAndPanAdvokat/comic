@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мрії здійснюються — комікс | TopchikGames</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800&family=Ruslan+Display&display=swap&subset=cyrillic">
+<style>
+:root{--night:#120e26;--plum:#241b4a;--pumpkin:#ff7a1a;--candle:#ffc247;--cream:#fff3dc;--blood:#b3202a}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{font-family:'Nunito',system-ui,sans-serif;color:var(--cream);background:radial-gradient(ellipse at 80% 0,#3b2a6e 0,transparent 55%),radial-gradient(ellipse at 10% 100%,#4a1d12 0,transparent 50%),var(--night);overflow-x:hidden;position:relative}
+h1,h2{font-family:'Ruslan Display','Georgia',serif;font-weight:400;letter-spacing:.02em}
+.moon{position:fixed;top:-60px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6c9,#ffd45e 60%,#e0a52c);box-shadow:0 0 120px 40px rgba(255,200,70,.35);opacity:.9;z-index:0}
+.fog{position:fixed;inset:auto 0 0 0;height:30vh;background:linear-gradient(to top,rgba(255,122,26,.18),transparent);pointer-events:none;z-index:0}
+.float{position:fixed;font-size:2rem;opacity:.55;pointer-events:none;z-index:0;animation:bob 6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-18px) rotate(6deg)}}
+.leaf{position:fixed;top:-40px;font-size:1.4rem;pointer-events:none;z-index:0;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(60px,110vh) rotate(540deg)}}
+main{position:relative;z-index:1;min-height:100vh;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:3rem;padding:3rem 1.5rem}
+.cover{width:min(340px,80vw);border-radius:14px;border:4px solid var(--pumpkin);box-shadow:0 0 0 8px rgba(255,122,26,.18),0 0 70px rgba(255,122,26,.45),0 24px 50px #000;transform:rotate(-2deg);transition:transform .4s;animation:glow 3s ease-in-out infinite alternate}
+.cover:hover{transform:rotate(0) scale(1.03)}
+@keyframes glow{to{box-shadow:0 0 0 8px rgba(255,194,71,.25),0 0 100px rgba(255,194,71,.6),0 24px 50px #000}}
+.info{max-width:420px}
+h1{font-size:clamp(2.4rem,6vw,3.8rem);line-height:1.05;color:var(--pumpkin);text-shadow:0 0 24px rgba(255,122,26,.6)}
+.by{margin:.6rem 0 1.4rem;color:var(--candle);font-weight:800}
+.price{font-size:1.15rem;margin-bottom:1.2rem}
+.price b{font-size:1.8rem;color:var(--candle)}
+.btns{display:flex;flex-direction:column;gap:.9rem}
+.btn{font:800 1.1rem 'Nunito',sans-serif;color:#2a1200;background:linear-gradient(180deg,#ffb347,var(--pumpkin));border:0;border-radius:999px;padding:.95rem 2rem;cursor:pointer;text-decoration:none;text-align:center;box-shadow:0 6px 0 #a64a00,0 10px 30px rgba(255,122,26,.4);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 #a64a00}
+.btn.alt{background:transparent;color:var(--candle);border:2px solid var(--candle);box-shadow:none}
+.btn:focus-visible,.close:focus-visible,.arrow:focus-visible{outline:3px solid var(--candle);outline-offset:3px}
+.btn:disabled{opacity:.6;cursor:wait}
+.hidden{display:none!important}
+.modal{position:fixed;inset:0;z-index:10;background:rgba(8,5,20,.8);display:grid;place-items:center;padding:1rem;backdrop-filter:blur(4px)}
+.card{max-width:460px;background:linear-gradient(160deg,#2d1f5c,#1a1235);border:2px solid var(--pumpkin);border-radius:18px;padding:2rem;box-shadow:0 0 60px rgba(255,122,26,.4);animation:pop .3s}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+.card h2{color:var(--pumpkin);font-size:2rem;margin-bottom:.8rem}
+.card p{line-height:1.6;font-style:italic;border-left:4px solid var(--blood);padding-left:1rem;margin-bottom:1.2rem}
+.check{display:flex;gap:.7rem;align-items:center;margin-bottom:1.4rem;cursor:pointer;font-weight:700}
+.check input{width:1.4rem;height:1.4rem;accent-color:var(--pumpkin)}
+.card .btn{width:100%}
+.close{display:block;margin:1rem auto 0;background:none;border:0;color:#b9a9e8;cursor:pointer;text-decoration:underline;font:inherit}
+.thanks{color:var(--candle);font-weight:800;margin-bottom:1rem}
+/* reader */
+body.reader{height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.bar{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1.2rem}
+.bar a{color:var(--candle);font-weight:800;text-decoration:none}
+.bar h2{color:var(--pumpkin);font-size:1.4rem}
+.stage{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;gap:.5rem;padding:0 .5rem 1rem;min-height:0}
+#book{filter:drop-shadow(0 0 40px rgba(255,122,26,.35))}
+.page img{width:100%;height:100%;display:block;object-fit:fill;background:#fff}
+.arrow{flex:none;width:56px;height:56px;border-radius:50%;border:3px solid var(--pumpkin);background:rgba(36,27,74,.9);color:var(--candle);font-size:1.8rem;cursor:pointer;transition:.2s;z-index:2}
+.arrow:hover{background:var(--pumpkin);color:#2a1200}
+.counter{position:absolute;bottom:.2rem;left:0;right:0;text-align:center;color:var(--candle);font-weight:800;z-index:2}
+.msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:3;font-size:1.3rem}
+@media(max-width:700px){.arrow{width:42px;height:42px;font-size:1.3rem}.moon{width:170px;height:170px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+.count{margin-bottom:1rem;color:var(--candle);font-weight:800;font-variant-numeric:tabular-nums}
+#buy:disabled{cursor:not-allowed;filter:grayscale(.7)}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<main>
+  <img class="cover" src="Обкладинка.png" alt="Обкладинка коміксу «Мрії здійснюються»">
+  <section class="info">
+    <h1>Мрії здійснюються</h1>
+    <p class="by">TopchikGames 🎃</p>
+
+    <div id="before">
+      <p class="price">Ціна: <b>0 грн</b></p>
+      <p class="count hidden" id="count"></p>
+      <div class="btns"><button class="btn" id="buy">Придбати за 0 грн</button></div>
+    </div>
+
+    <div id="after" class="hidden">
+      <p class="thanks">Комікс твій. Назавжди. 🔥</p>
+      <div class="btns">
+        <a class="btn" href="reader.html">Почати перегляд</a>
+        <button class="btn alt" id="pdf">Завантажити у PDF</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="ot">
+  <div class="card">
+    <h2 id="ot">Оферта</h2>
+    <p>Погоджуючись з цією офертою ви передаєте свою безсмертну душу у володіння його темності князя пекла Сатані.</p>
+    <label class="check"><input type="checkbox" id="agree"> Я погоджуюсь з офертою</label>
+    <button class="btn" id="confirm">Придбати</button>
+    <button class="close" id="cancel">Передумав</button>
+  </div>
+</div>
+
+<script>
+/* Налаштування */
+const PAGES_DIR = 'Сторінки';             // папка зі сторінками коміксу
+const EXTS = ['png', 'jpg', 'jpeg', 'webp']; // можливі формати файлів
+const COOKIE = 'comic_purchased';
+
+const setPurchased = () => { document.cookie = `${COOKIE}=1; max-age=${60*60*24*365}; path=/; SameSite=Lax`; };
+const isPurchased = () => document.cookie.split('; ').some(c => c === COOKIE + '=1');
+
+function probe(url){ return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = url; }); }
+
+/* Шукає сторінки 1,2,3... доки файли існують */
+async function loadPages(){
+  const out = []; let ext = null;
+  for (let n = 1; n < 500; n++){
+    let img = null;
+    for (const e of (ext ? [ext] : EXTS)){
+      img = await probe(encodeURI(`${PAGES_DIR}/${n}.${e}`));
+      if (img){ ext = e; break; }
+    }
+    if (!img) break;
+    out.push(img);
+  }
+  return out;
+}
+
+/* Осінні листочки та гарбузи на фоні */
+function decorate(){
+  const b = document.body;
+  [['🎃','6%','70%','0s'],['🦇','20%','12%','1s'],['🕸️','88%','40%','2s'],['👻','75%','80%','.5s'],['🎃','40%','88%','1.5s']].forEach(([e,l,t,d])=>{
+    const s = document.createElement('span'); s.className='float'; s.textContent=e;
+    s.style.cssText=`left:${l};top:${t};animation-delay:${d}`; b.append(s);
+  });
+  for (let i=0;i<9;i++){
+    const s = document.createElement('span'); s.className='leaf'; s.textContent=['🍂','🍁'][i%2];
+    s.style.cssText=`left:${i*11+Math.random()*8}%;animation-duration:${12+Math.random()*10}s;animation-delay:${-Math.random()*20}s`; b.append(s);
+  }
+  b.insertAdjacentHTML('afterbegin','<div class="moon"></div><div class="fog"></div>');
+}
+
+decorate();
+const $ = id => document.getElementById(id);
+/* ===== Відкриття продажу: 29.10.2026, 03:00 (за київським часом, UTC+2) ===== */
+const UNLOCK = Date.parse('2026-10-29T03:00:00+02:00');
+let skew = 0; // різниця між часом сервера і годинником відвідувача (щоб не обійти зміною дати на ПК)
+fetch(location.href, {method:'HEAD', cache:'no-store'}).then(r => {
+  const d = r.headers.get('Date'); if (d) skew = Date.parse(d) - Date.now();
+}).catch(() => {});
+const locked = () => Date.now() + skew < UNLOCK;
+const pad = n => String(n).padStart(2, '0');
+function tick(){
+  if (isPurchased()) return;
+  const left = UNLOCK - (Date.now() + skew), on = left > 0;
+  $('buy').disabled = on;
+  $('count').classList.toggle('hidden', !on);
+  if (on){
+    const t = Math.floor(left / 1000), d = Math.floor(t / 86400);
+    $('count').textContent = '🔒 Комікс відкриється через ' + (d ? d + ' д ' : '') + pad(Math.floor(t % 86400 / 3600)) + ':' + pad(Math.floor(t % 3600 / 60)) + ':' + pad(t % 60);
+    $('modal').classList.add('hidden');
+  }
+}
+setInterval(tick, 1000);
+
+function render(){
+  const p = isPurchased();
+  $('before').classList.toggle('hidden', p);
+  $('after').classList.toggle('hidden', !p);
+}
+render(); tick();
+$('buy').onclick = () => !locked() && $('modal').classList.remove('hidden');
+$('cancel').onclick = () => $('modal').classList.add('hidden');
+document.addEventListener('keydown', e => e.key === 'Escape' && $('modal').classList.add('hidden'));
+// Галочка нічого не вирішує — кнопка працює в будь-якому разі 😈
+$('confirm').onclick = () => { if (locked()) return; setPurchased(); $('modal').classList.add('hidden'); render(); };
+
+$('pdf').onclick = async () => {
+  const btn = $('pdf'), old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Збираємо PDF… 🎃';
+  try {
+    const imgs = await loadPages();
+    if (!imgs.length) throw new Error('Не знайдено сторінок у папці «' + PAGES_DIR + '»');
+    const { jsPDF } = window.jspdf;
+    let pdf;
+    imgs.forEach((img, i) => {
+      const w = img.naturalWidth, h = img.naturalHeight, o = w > h ? 'l' : 'p';
+      if (i === 0) pdf = new jsPDF({ unit: 'px', format: [w, h], orientation: o, compress: true });
+      else pdf.addPage([w, h], o);
+      pdf.addImage(img, 'PNG', 0, 0, w, h, undefined, 'FAST');
+    });
+    pdf.save('Мрії здійснюються.pdf');
+  } catch (e) {
+    alert('Не вдалося створити PDF: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = old;
+};
+</script>
+</body>
+</html>
