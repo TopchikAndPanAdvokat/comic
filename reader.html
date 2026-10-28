@@ -10,7 +10,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <script>
-  // Без покупки — назад на головну
   (function(){
     var ok = document.cookie.split('; ').some(function(c){ return c === 'comic_purchased=1' });
     try{ ok = ok || localStorage.getItem('comic_purchased') === '1' }catch(e){}
@@ -49,10 +48,9 @@
   .nav:active{transform:scale(.95) translateY(3px)}
   .nav[disabled]{opacity:.25;cursor:default;transform:none}
 
-  /* ---------- книга ---------- */
   .book-wrap{position:relative}
   .book{position:relative;isolation:isolate}
-  .book::before{ /* палітурка під сторінками */
+  .book::before{
     content:"";position:absolute;inset:-14px -16px;border-radius:10px;z-index:-1;
     background:linear-gradient(90deg,#3a1205,#5c1f08 48%,#2a0c03 50%,#5c1f08 52%,#3a1205);
     box-shadow:0 30px 70px rgba(0,0,0,.8),0 0 60px rgba(255,110,0,.25),inset 0 0 0 2px #ff8a1f55}
@@ -70,11 +68,55 @@
   .loader.done{opacity:0;pointer-events:none}
   .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;font-size:12px;opacity:.5;z-index:4}
 
+  body.reading{background:#07040f}
+  body.reading header,
+  body.reading .nav,
+  body.reading .hint,
+  body.reading #fx{display:none}
+  body.reading .stage{height:100%;padding:0;gap:0}
+  body.reading .book::before{inset:0;border-radius:0;background:#07040f;box-shadow:none}
+
+  .fs-hint{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:20px;
+    background:rgba(8,3,20,.78);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .4s}
+  .fs-hint.show{opacity:1;pointer-events:auto}
+  .fs-card{position:relative;max-width:420px;width:100%;text-align:center;padding:30px 26px 26px;border-radius:22px;
+    background:linear-gradient(180deg,#2a1450,#170a33);border:3px solid var(--orange);
+    box-shadow:0 0 0 6px rgba(255,122,24,.15),0 0 50px rgba(255,110,0,.45),0 25px 60px rgba(0,0,0,.7);
+    transform:translateY(24px) rotate(-1.5deg) scale(.94);transition:transform .5s cubic-bezier(.2,1.4,.4,1)}
+  .fs-hint.show .fs-card{transform:none}
+  .fs-pk{font-size:46px;filter:drop-shadow(0 0 14px rgba(255,120,0,.9));animation:pulse 1.6s ease-in-out infinite}
+  .fs-title{font-family:'Rubik Wet Paint','Rubik',cursive;color:var(--orange);font-size:clamp(24px,5vw,32px);line-height:1.1;margin:6px 0 18px;
+    text-shadow:0 0 10px rgba(255,122,24,.8),2px 2px 0 #2a0a00}
+  .keycap{width:88px;height:88px;border-radius:20px;border:none;cursor:pointer;font:800 46px 'Rubik',sans-serif;color:#2a0d00;
+    background:radial-gradient(circle at 35% 28%,#ffe2a8,#ff9a2e 58%,#d24d00);
+    box-shadow:0 8px 0 #7a2600,0 0 30px rgba(255,120,0,.7);transition:transform .12s,box-shadow .12s;animation:press 1.8s ease-in-out infinite}
+  .keycap:hover{animation-play-state:paused}
+  .keycap:active{transform:translateY(6px);box-shadow:0 2px 0 #7a2600,0 0 30px rgba(255,120,0,.7)}
+  @keyframes press{0%,60%,100%{transform:none;box-shadow:0 8px 0 #7a2600,0 0 30px rgba(255,120,0,.7)}
+    75%{transform:translateY(6px);box-shadow:0 2px 0 #7a2600,0 0 40px rgba(255,160,40,.9)}}
+  .fs-text{margin:22px auto 20px;max-width:330px;font-size:15px;line-height:1.5;color:var(--bone)}
+  .fs-text b{color:var(--glow)}
+  .fs-ok{font:600 15px 'Rubik',sans-serif;color:var(--bone);cursor:pointer;padding:10px 22px;border-radius:999px;
+    background:rgba(58,29,110,.7);border:2px solid rgba(255,122,24,.6);transition:.2s}
+  .fs-ok:hover{background:rgba(255,122,24,.25)}
+  .keycap:focus-visible,.fs-ok:focus-visible{outline:3px solid var(--glow);outline-offset:4px}
+
+  .fs-toast{position:fixed;left:50%;bottom:22px;z-index:25;transform:translateX(-50%);pointer-events:none;
+    padding:9px 18px;border-radius:999px;font-size:14px;font-weight:600;color:var(--bone);white-space:nowrap;
+    background:rgba(20,8,40,.85);border:2px solid rgba(255,122,24,.6);box-shadow:0 0 24px rgba(255,110,0,.35);
+    animation:toast 3.2s ease forwards}
+  .fs-toast b{color:var(--glow)}
+  @keyframes toast{0%{opacity:0;transform:translate(-50%,12px)}10%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
+
   @media (max-width:700px){
     .nav{width:44px;height:44px;font-size:22px}
     .stage{gap:6px;padding:0 4px 18px}
     .counter{min-width:auto;font-size:13px}
     .home{padding:7px 11px;font-size:13px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .fs-pk,.keycap{animation:none}
+    .fs-card{transition:none}
   }
 </style>
 </head>
@@ -90,14 +132,24 @@
   <div class="book-wrap" id="wrap"></div>
   <button class="nav" id="next" aria-label="Наступні сторінки">▶</button>
 </div>
-<div class="hint">Стрілки ← → на клавіатурі, свайп або перетягни кут сторінки</div>
+<div class="hint">Стрілки ← → на клавіатурі, свайп або перетягни кут сторінки · F — на весь екран</div>
 <div class="loader" id="loader"><div class="pk">🎃</div><div id="loadTxt">Відкриваємо книгу…</div></div>
 
+<div class="fs-hint" id="fsHint" role="dialog" aria-modal="true" aria-labelledby="fsTitle">
+  <div class="fs-card">
+    <div class="fs-pk">🎃</div>
+    <div class="fs-title" id="fsTitle">Читай на весь екран</div>
+    <button class="keycap" id="fsKey" aria-label="Увімкнути повноекранний режим">F</button>
+    <p class="fs-text">Натисни <b>F</b> — і сторінки заповнять увесь екран, без зайвого. Перегортання працює так само. Щоб вийти, знову натисни <b>F</b> або <b>Esc</b>.</p>
+    <button class="fs-ok" id="fsOk">Зрозуміло</button>
+  </div>
+</div>
+
 <script>
-/* ===== Налаштування ===== */
 const PAGES_DIR  = 'Сторінки';
 const EXTENSIONS = ['png','jpg','jpeg','webp'];
 const MAX_PAGES  = 500;
+const HINT_KEY   = 'reader_fullscreen_hint_seen';
 
 function pageUrl(n, ext){ return encodeURI(PAGES_DIR + '/' + n + '.' + ext) }
 function imgExists(url){ return new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url; }); }
@@ -117,15 +169,14 @@ async function detectPages(){
   return list;
 }
 
-/* ===== Книга (перегортання — StPageFlip) ===== */
 const $ = id => document.getElementById(id);
 const wrap = $('wrap');
-let pages = [], pf = null, single = false, ratio = 1440/2560, cur = 0, lastKey = '';
+let pages = [], pf = null, single = false, ratio = 1440/2560, cur = 0, lastKey = '', reading = false, rebuildTimer;
 
 function layout(){
   const portrait = innerWidth <= 700;
-  const navW = (portrait ? 44 : 64) * 2 + 60;
-  const availW = innerWidth - navW, availH = innerHeight - 64 - 46, cols = portrait ? 1 : 2;
+  const navW = reading ? 0 : (portrait ? 44 : 64) * 2 + 60;
+  const availW = innerWidth - navW, availH = reading ? innerHeight : innerHeight - 64 - 46, cols = portrait ? 1 : 2;
   let w = availH * ratio, h = availH;
   if (w * cols > availW){ w = availW / cols; h = w / ratio; }
   return { portrait, w: Math.floor(w), h: Math.floor(h) };
@@ -158,14 +209,14 @@ function build(){
     const img = new Image(); img.src = src; img.alt = 'Сторінка ' + (n + 1); img.draggable = false;
     d.append(img); return d;
   });
-  if (pages.length % 2){            // порожня сторінка в кінці, щоб розворот був парним
+  if (pages.length % 2){
     const d = document.createElement('div'); d.className = 'pg';
     d.innerHTML = '<div class="blank"><div>🎃<span>Кінець</span></div></div>'; els.push(d);
   }
 
   pf = new St.PageFlip(inner, {
     width: L.w, height: L.h, size: 'fixed',
-    showCover: false,                // розворот 1–2, 3–4 …
+    showCover: false,
     usePortrait: single,
     startPage: single ? cur : cur - cur % 2,
     drawShadow: true, maxShadowOpacity: .6, flippingTime: 900,
@@ -176,9 +227,69 @@ function build(){
   update();
 }
 
+function showToast(){
+  document.querySelectorAll('.fs-toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'fs-toast';
+  t.innerHTML = 'Вийти — <b>F</b> або <b>Esc</b>';
+  t.addEventListener('animationend', () => t.remove());
+  document.body.appendChild(t);
+}
+
+function setReading(on){
+  if (on === reading) return;
+  reading = on;
+  document.body.classList.toggle('reading', on);
+  const root = document.documentElement;
+  if (on){
+    const req = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (req){ try{ const p = req.call(root); if (p && p.catch) p.catch(() => {}); }catch(e){} }
+    showToast();
+  } else {
+    document.querySelectorAll('.fs-toast').forEach(t => t.remove());
+    if (document.fullscreenElement || document.webkitFullscreenElement){
+      const ex = document.exitFullscreen || document.webkitExitFullscreen;
+      if (ex){ try{ const p = ex.call(document); if (p && p.catch) p.catch(() => {}); }catch(e){} }
+    }
+  }
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => { if (pf) build(); }, 150);
+}
+
+function onFullscreenChange(){
+  if (reading && !document.fullscreenElement && !document.webkitFullscreenElement) setReading(false);
+}
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+const hint = $('fsHint');
+function hideHint(){
+  if (!hint.classList.contains('show')) return;
+  hint.classList.remove('show');
+  try{ localStorage.setItem(HINT_KEY, '1') }catch(e){}
+}
+function maybeShowHint(){
+  let seen = false;
+  try{ seen = localStorage.getItem(HINT_KEY) === '1' }catch(e){}
+  if (!seen) setTimeout(() => hint.classList.add('show'), 700);
+}
+$('fsOk').onclick = hideHint;
+$('fsKey').onclick = () => { hideHint(); setReading(true); };
+hint.addEventListener('click', e => { if (e.target === hint) hideHint(); });
+
 $('next').onclick = () => pf && pf.flipNext();
 $('prev').onclick = () => pf && pf.flipPrev();
 document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'KeyF'){
+    if (e.repeat) return;
+    e.preventDefault();
+    hideHint();
+    setReading(!reading);
+    return;
+  }
+  if (hint.classList.contains('show')){ hideHint(); return; }
+  if (e.key === 'Escape' && reading){ setReading(false); return; }
   if (!pf) return;
   if (e.key === 'ArrowRight') pf.flipNext();
   if (e.key === 'ArrowLeft') pf.flipPrev();
@@ -195,9 +306,9 @@ addEventListener('resize', () => {
   await new Promise(r => { const i = new Image(); i.onload = () => { ratio = i.naturalWidth / i.naturalHeight; r(); }; i.onerror = r; i.src = pages[0]; });
   build();
   $('loader').classList.add('done');
+  maybeShowHint();
 })();
 
-/* ===== Атмосфера ===== */
 const fx = $('fx');
 function spawn(cls, txt, styler){
   const el = document.createElement('div'); el.className = cls; el.textContent = txt; styler(el.style);
