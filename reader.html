@@ -68,13 +68,18 @@
   .loader.done{opacity:0;pointer-events:none}
   .hint{position:fixed;bottom:8px;left:0;right:0;text-align:center;font-size:12px;opacity:.5;z-index:4}
 
-  body.reading{background:#07040f}
+  body.reading{background:#07040f;user-select:none;-webkit-user-select:none}
   body.reading header,
   body.reading .nav,
   body.reading .hint,
   body.reading #fx{display:none}
   body.reading .stage{height:100%;padding:0;gap:0}
   body.reading .book::before{inset:0;border-radius:0;background:#07040f;box-shadow:none}
+
+  .book-wrap.smooth{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .zoom-layer{position:fixed;inset:0;z-index:6;display:none;cursor:grab;touch-action:none}
+  body.zoomed .zoom-layer{display:block}
+  .zoom-layer.panning{cursor:grabbing}
 
   .fs-hint{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:20px;
     background:rgba(8,3,20,.78);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .4s}
@@ -102,11 +107,12 @@
   .keycap:focus-visible,.fs-ok:focus-visible{outline:3px solid var(--glow);outline-offset:4px}
 
   .fs-toast{position:fixed;left:50%;bottom:22px;z-index:25;transform:translateX(-50%);pointer-events:none;
-    padding:9px 18px;border-radius:999px;font-size:14px;font-weight:600;color:var(--bone);white-space:nowrap;
+    max-width:min(92vw,540px);text-align:center;line-height:1.4;
+    padding:9px 18px;border-radius:18px;font-size:14px;font-weight:600;color:var(--bone);
     background:rgba(20,8,40,.85);border:2px solid rgba(255,122,24,.6);box-shadow:0 0 24px rgba(255,110,0,.35);
-    animation:toast 3.2s ease forwards}
+    animation:toast 5s ease forwards}
   .fs-toast b{color:var(--glow)}
-  @keyframes toast{0%{opacity:0;transform:translate(-50%,12px)}10%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
+  @keyframes toast{0%{opacity:0;transform:translate(-50%,12px)}8%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
 
   @media (max-width:700px){
     .nav{width:44px;height:44px;font-size:22px}
@@ -132,6 +138,7 @@
   <div class="book-wrap" id="wrap"></div>
   <button class="nav" id="next" aria-label="Наступні сторінки">▶</button>
 </div>
+<div class="zoom-layer" id="zoomLayer"></div>
 <div class="hint">Стрілки ← → на клавіатурі, свайп або перетягни кут сторінки · F — на весь екран</div>
 <div class="loader" id="loader"><div class="pk">🎃</div><div id="loadTxt">Відкриваємо книгу…</div></div>
 
@@ -140,7 +147,7 @@
     <div class="fs-pk">🎃</div>
     <div class="fs-title" id="fsTitle">Читай на весь екран</div>
     <button class="keycap" id="fsKey" aria-label="Увімкнути повноекранний режим">F</button>
-    <p class="fs-text">Натисни <b>F</b> — і сторінки заповнять увесь екран, без зайвого. Перегортання працює так само. Щоб вийти, знову натисни <b>F</b> або <b>Esc</b>.</p>
+    <p class="fs-text">Натисни <b>F</b> — і сторінки заповнять увесь екран, без зайвого. Перегортання працює так само. Двічі клікни або покрути колесо миші, щоб роздивитися дрібні деталі. Щоб вийти, знову натисни <b>F</b> або <b>Esc</b>.</p>
     <button class="fs-ok" id="fsOk">Зрозуміло</button>
   </div>
 </div>
@@ -172,6 +179,8 @@ async function detectPages(){
 const $ = id => document.getElementById(id);
 const wrap = $('wrap');
 let pages = [], pf = null, single = false, ratio = 1440/2560, cur = 0, lastKey = '', reading = false, rebuildTimer;
+const z = { s: 1, x: 0, y: 0 };
+const ZOOM_MAX = 5, ZOOM_DOUBLE = 2.5, DOUBLE_MS = 280;
 
 function layout(){
   const portrait = innerWidth <= 700;
@@ -192,6 +201,7 @@ function update(){
 }
 
 function build(){
+  resetZoom();
   const L = layout();
   if (pf){ cur = pf.getCurrentPageIndex(); pf.destroy(); pf = null; }
   single = L.portrait;
@@ -219,6 +229,7 @@ function build(){
     showCover: false,
     usePortrait: single,
     startPage: single ? cur : cur - cur % 2,
+    disableFlipByClick: reading,
     drawShadow: true, maxShadowOpacity: .6, flippingTime: 900,
     mobileScrollSupport: false
   });
@@ -231,7 +242,7 @@ function showToast(){
   document.querySelectorAll('.fs-toast').forEach(t => t.remove());
   const t = document.createElement('div');
   t.className = 'fs-toast';
-  t.innerHTML = 'Вийти — <b>F</b> або <b>Esc</b>';
+  t.innerHTML = 'Вийти — <b>F</b> або <b>Esc</b><br>Наближення — <b>подвійний клік</b> або колесо миші';
   t.addEventListener('animationend', () => t.remove());
   document.body.appendChild(t);
 }
@@ -239,6 +250,7 @@ function showToast(){
 function setReading(on){
   if (on === reading) return;
   reading = on;
+  resetZoom();
   document.body.classList.toggle('reading', on);
   const root = document.documentElement;
   if (on){
@@ -276,6 +288,105 @@ function maybeShowHint(){
 $('fsOk').onclick = hideHint;
 $('fsKey').onclick = () => { hideHint(); setReading(true); };
 hint.addEventListener('click', e => { if (e.target === hint) hideHint(); });
+
+const zoomLayer = $('zoomLayer');
+
+function clampPan(){
+  const mx = Math.max(0, (wrap.offsetWidth * z.s - innerWidth) / 2);
+  const my = Math.max(0, (wrap.offsetHeight * z.s - innerHeight) / 2);
+  z.x = Math.min(mx, Math.max(-mx, z.x));
+  z.y = Math.min(my, Math.max(-my, z.y));
+}
+
+function applyZoom(){
+  wrap.style.transform = z.s === 1 ? '' : 'translate(' + z.x + 'px,' + z.y + 'px) scale(' + z.s + ')';
+  document.body.classList.toggle('zoomed', z.s > 1);
+}
+
+function resetZoom(){
+  z.s = 1; z.x = 0; z.y = 0;
+  wrap.classList.remove('smooth');
+  applyZoom();
+}
+
+function zoomAt(px, py, next){
+  next = Math.min(ZOOM_MAX, Math.max(1, next));
+  const cx = innerWidth / 2, cy = innerHeight / 2;
+  const ux = (px - cx - z.x) / z.s, uy = (py - cy - z.y) / z.s;
+  z.s = next;
+  z.x = px - cx - next * ux;
+  z.y = py - cy - next * uy;
+  if (next < 1.001){ z.s = 1; z.x = 0; z.y = 0; }
+  clampPan();
+  applyZoom();
+}
+
+function toggleZoom(px, py){
+  wrap.classList.add('smooth');
+  zoomAt(px, py, z.s > 1 ? 1 : ZOOM_DOUBLE);
+  setTimeout(() => wrap.classList.remove('smooth'), 400);
+}
+
+document.addEventListener('wheel', e => {
+  if (!reading || hint.classList.contains('show')) return;
+  e.preventDefault();
+  wrap.classList.remove('smooth');
+  const unit = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1;
+  const speed = e.ctrlKey ? 0.01 : 0.0018;
+  zoomAt(e.clientX, e.clientY, z.s * Math.exp(-e.deltaY * unit * speed));
+}, { passive: false });
+
+let downX = 0, downY = 0, clickTimer = null, lastX = 0, lastY = 0;
+document.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; }, true);
+document.addEventListener('click', e => {
+  if (!reading || hint.classList.contains('show')) return;
+  if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return;
+  if (clickTimer && Math.hypot(e.clientX - lastX, e.clientY - lastY) < 30){
+    clearTimeout(clickTimer); clickTimer = null;
+    toggleZoom(e.clientX, e.clientY);
+    return;
+  }
+  clearTimeout(clickTimer);
+  lastX = e.clientX; lastY = e.clientY;
+  clickTimer = setTimeout(() => {
+    clickTimer = null;
+    if (!pf || z.s > 1) return;
+    if (lastX < innerWidth / 2) pf.flipPrev(); else pf.flipNext();
+  }, DOUBLE_MS);
+});
+
+const pointers = new Map();
+let pinchDist = 0;
+const spread = () => { const [a, b] = [...pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+zoomLayer.addEventListener('pointerdown', e => {
+  zoomLayer.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  wrap.classList.remove('smooth');
+  zoomLayer.classList.add('panning');
+  if (pointers.size === 2) pinchDist = spread();
+});
+zoomLayer.addEventListener('pointermove', e => {
+  const p = pointers.get(e.pointerId);
+  if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 1){
+    z.x += dx; z.y += dy;
+    clampPan();
+    applyZoom();
+  } else if (pointers.size === 2){
+    const [a, b] = [...pointers.values()], d = spread();
+    zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, z.s * d / pinchDist);
+    pinchDist = d;
+  }
+});
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchDist = 0;
+  if (!pointers.size) zoomLayer.classList.remove('panning');
+}
+zoomLayer.addEventListener('pointerup', endPointer);
+zoomLayer.addEventListener('pointercancel', endPointer);
 
 $('next').onclick = () => pf && pf.flipNext();
 $('prev').onclick = () => pf && pf.flipPrev();
