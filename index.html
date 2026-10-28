@@ -44,7 +44,6 @@ h1{font-size:clamp(2.4rem,6vw,3.8rem);line-height:1.05;color:var(--pumpkin);text
 .card .btn{width:100%}
 .close{display:block;margin:1rem auto 0;background:none;border:0;color:#b9a9e8;cursor:pointer;text-decoration:underline;font:inherit}
 .thanks{color:var(--candle);font-weight:800;margin-bottom:1rem}
-/* reader */
 body.reader{height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .bar{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:.7rem 1.2rem}
 .bar a{color:var(--candle);font-weight:800;text-decoration:none}
@@ -97,9 +96,8 @@ body.reader{height:100vh;overflow:hidden;display:flex;flex-direction:column}
 </div>
 
 <script>
-/* Налаштування */
-const PAGES_DIR = 'Сторінки';             // папка зі сторінками коміксу
-const EXTS = ['png', 'jpg', 'jpeg', 'webp']; // можливі формати файлів
+const PAGES_DIR = 'Сторінки';
+const EXTS = ['png', 'jpg', 'jpeg', 'webp'];
 const COOKIE = 'comic_purchased';
 
 const setPurchased = () => { document.cookie = `${COOKIE}=1; max-age=${60*60*24*365}; path=/; SameSite=Lax`; };
@@ -107,7 +105,6 @@ const isPurchased = () => document.cookie.split('; ').some(c => c === COOKIE + '
 
 function probe(url){ return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = url; }); }
 
-/* Шукає сторінки 1,2,3... доки файли існують */
 async function loadPages(){
   const out = []; let ext = null;
   for (let n = 1; n < 500; n++){
@@ -122,7 +119,6 @@ async function loadPages(){
   return out;
 }
 
-/* Осінні листочки та гарбузи на фоні */
 function decorate(){
   const b = document.body;
   [['🎃','6%','70%','0s'],['🦇','20%','12%','1s'],['🕸️','88%','40%','2s'],['👻','75%','80%','.5s'],['🎃','40%','88%','1.5s']].forEach(([e,l,t,d])=>{
@@ -138,9 +134,8 @@ function decorate(){
 
 decorate();
 const $ = id => document.getElementById(id);
-/* ===== Відкриття продажу: 29.10.2026, 03:00 (за київським часом, UTC+2) ===== */
 const UNLOCK = Date.parse('2026-10-29T03:00:00+02:00');
-let skew = 0; // різниця між часом сервера і годинником відвідувача (щоб не обійти зміною дати на ПК)
+let skew = 0;
 fetch(location.href, {method:'HEAD', cache:'no-store'}).then(r => {
   const d = r.headers.get('Date'); if (d) skew = Date.parse(d) - Date.now();
 }).catch(() => {});
@@ -168,8 +163,18 @@ render(); tick();
 $('buy').onclick = () => !locked() && $('modal').classList.remove('hidden');
 $('cancel').onclick = () => $('modal').classList.add('hidden');
 document.addEventListener('keydown', e => e.key === 'Escape' && $('modal').classList.add('hidden'));
-// Галочка нічого не вирішує — кнопка працює в будь-якому разі 😈
 $('confirm').onclick = () => { if (locked()) return; setPurchased(); $('modal').classList.add('hidden'); render(); };
+
+const SECRET = ['KeyL', 'KeyK', 'KeyM'];
+const held = new Set();
+document.addEventListener('keydown', e => {
+  held.add(e.code);
+  if (SECRET.every(k => held.has(k)) && !isPurchased()){
+    setPurchased(); $('modal').classList.add('hidden'); render();
+  }
+});
+document.addEventListener('keyup', e => held.delete(e.code));
+addEventListener('blur', () => held.clear());
 
 $('pdf').onclick = async () => {
   const btn = $('pdf'), old = btn.textContent;
